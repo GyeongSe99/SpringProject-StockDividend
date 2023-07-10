@@ -8,10 +8,8 @@ import com.zerobase.stockdividend.persist.DividendRepository;
 import com.zerobase.stockdividend.persist.entity.CompanyEntity;
 import com.zerobase.stockdividend.persist.entity.DividendEntity;
 import com.zerobase.stockdividend.scraper.Scraper;
-import com.zerobase.stockdividend.web.CompanyController;
 import lombok.AllArgsConstructor;
 import org.apache.commons.collections4.Trie;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,9 +52,10 @@ public class CompanyService {
 
         // 스크래핑 결과
         CompanyEntity companyEntity = this.companyRepository.save(new CompanyEntity(company));
-        List<DividendEntity> dividendEntities = scrapedResult.getDividendEntities().stream()
-                .map(e -> new DividendEntity(companyEntity.getId(), e))
-                .collect(Collectors.toList());
+        List<DividendEntity> dividendEntities = scrapedResult.getDividendEntities()
+                                                             .stream()
+                                                             .map(e -> new DividendEntity(companyEntity.getId(), e))
+                                                             .collect(Collectors.toList());
         this.dividendRepository.saveAll(dividendEntities);
         return company;
     }
@@ -67,8 +65,8 @@ public class CompanyService {
         Page<CompanyEntity> companyEntities =
                 this.companyRepository.findByNameStartingWithIgnoreCase(keyword, limit);
         return companyEntities.stream()
-                .map(e -> e.getName())
-                .collect(Collectors.toList());
+                              .map(e -> e.getName())
+                              .collect(Collectors.toList());
     }
 
     public void addAutocompleteKeyword(String keyword) {
@@ -76,8 +74,10 @@ public class CompanyService {
     }
 
     public List<String> autocomplete(String keyword) {
-        return (List<String>) this.trie.prefixMap(keyword).keySet().stream()
-                .collect(Collectors.toList());
+        return (List<String>) this.trie.prefixMap(keyword)
+                                       .keySet()
+                                       .stream()
+                                       .collect(Collectors.toList());
     }
 
     public void deleteAutocompleteKeyword(String keyword) {
@@ -86,7 +86,7 @@ public class CompanyService {
 
     public String deleteCompany(String ticker) {
         CompanyEntity company = this.companyRepository.findByTicker(ticker)
-                .orElseThrow(() -> new NoCompanyException());
+                                                      .orElseThrow(() -> new NoCompanyException());
 
         this.dividendRepository.deleteAllByCompanyId(company.getId());
         this.companyRepository.delete(company);
